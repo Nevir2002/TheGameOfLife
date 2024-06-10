@@ -6,6 +6,7 @@ class GameOfLife {
 		this.currentGeneration = 1;
 		this.grid = this.make2DArray(this.cols, this.rows);
 		this.history = [this.grid];
+		this.populationData = [this.calculatePopulationPercentage(this.grid)];
 
 		this.canvas = document.getElementById("canvas");
 		this.ctx = this.canvas.getContext("2d");
@@ -18,6 +19,8 @@ class GameOfLife {
 
 		this.dx = [-1, 0, 1, -1, 1, -1, 0, 1];
 		this.dy = [-1, -1, -1, 0, 0, 1, 1, 1];
+
+        this.lineChart = null;
 
 		this.setup();
 		this.addEventListeners();
@@ -81,32 +84,37 @@ class GameOfLife {
 	}
 
 	jumpToGeneration(generation) {
-        if (generation < 0 || Math.abs(generation - this.currentGeneration) > 1000) {
-            alert('Invalid generation number or jump difference exceeds 1000 steps');
-            return;
-        }
-    
-        // Check if the requested generation is already in the history
-        if (generation < this.history.length) {
-            this.currentGeneration = generation;
-            this.grid = this.history[generation];
-            this.draw();
-            return;
-        }
-    
-        // If not, determine whether to move forward or backward
-        if (generation < this.currentGeneration) {
-            while (this.currentGeneration > generation) {
-                this.previousGeneration();
-            }
-        } else {
-            this.grid = this.history[this.history.length-1]
-            this.currentGeneration = this.history.length
-            while (this.currentGeneration < generation) {
-                this.update();
-            }
-        }
-    }
+		if (
+			generation < 0 ||
+			Math.abs(generation - this.currentGeneration) > 1000
+		) {
+			alert(
+				"Invalid generation number or jump difference exceeds 1000 steps"
+			);
+			return;
+		}
+
+		// Check if the requested generation is already in the history
+		if (generation < this.history.length) {
+			this.currentGeneration = generation;
+			this.grid = this.history[generation];
+			this.draw();
+			return;
+		}
+
+		// If not, determine whether to move forward or backward
+		if (generation < this.currentGeneration) {
+			while (this.currentGeneration > generation) {
+				this.previousGeneration();
+			}
+		} else {
+			this.grid = this.history[this.history.length - 1];
+			this.currentGeneration = this.history.length;
+			while (this.currentGeneration < generation) {
+				this.update();
+			}
+		}
+	}
 
 	setup() {
 		this.grid = this.make2DArray(this.cols, this.rows);
@@ -114,33 +122,33 @@ class GameOfLife {
 		this.canvas.height = this.rows * this.squareSize;
 		this.currentGeneration = 1;
 		this.history = [this.grid];
+        this.createPopulationChart();
 		this.draw();
 	}
 
 	update() {
-        console.log("generation " + this.currentGeneration);
-        if (this.history.length > this.currentGeneration + 1) {
-            // If history has the next generation, use it
-            this.grid = this.history[this.currentGeneration + 1];
-            this.currentGeneration++;
-        } else {
-            // Otherwise, compute the next generation
-            this.grid = this.nextGen(this.grid);
-            this.history.push(this.grid);
-        }
-        this.draw();
-    }
+		if (this.history.length > this.currentGeneration + 1) {
+			this.grid = this.history[this.currentGeneration];
+		} else {
+			this.grid = this.nextGen(this.grid);
+			this.history.push(this.grid);
+			this.populationData.push(
+				this.calculatePopulationPercentage(this.grid)
+			);
+		}
+		this.currentGeneration++;
+		this.draw();
+	}
 
 	previousGeneration() {
-        if (this.currentGeneration > 0) {
-            this.currentGeneration--;
-            this.grid = this.history[this.currentGeneration];
-            this.draw();
-        }
-    }
+		if (this.currentGeneration > 0) {
+			this.currentGeneration--;
+			this.grid = this.history[this.currentGeneration];
+			this.draw();
+		}
+	}
 
 	nextGen(arr) {
-		this.currentGeneration++;
 		let res = this.make2DArray(this.cols, this.rows);
 		for (let i = 0; i < this.rows; i++) {
 			for (let j = 0; j < this.cols; j++) {
@@ -175,6 +183,8 @@ class GameOfLife {
 	}
 
 	draw() {
+        this.updateChart()
+		// console.log(this.lineChart);
 		let cnt = 0;
 		for (let i = 0; i < this.grid.length; i++) {
 			for (let j = 0; j < this.grid[i].length; j++) {
@@ -191,7 +201,11 @@ class GameOfLife {
 			}
 		}
 		this.genP.innerHTML = `Generation: ${this.currentGeneration}`;
-		this.popP.innerHTML = `Population: ${cnt}/${this.cols*this.rows} (${(cnt*100/this.cols/this.rows).toFixed(2)}%)`;
+		this.popP.innerHTML = `Population: ${cnt}/${this.cols * this.rows} (${(
+			(cnt * 100) /
+			this.cols /
+			this.rows
+		).toFixed(2)}%)`;
 	}
 
 	updateSettings(newCols, newRows, newSquareSize) {
@@ -200,6 +214,56 @@ class GameOfLife {
 		this.squareSize = newSquareSize;
 		this.setup();
 	}
+	calculatePopulationPercentage(grid) {
+		let totalCells = grid.length * grid[0].length;
+		let populationCount = 0;
+
+		for (let i = 0; i < grid.length; i++) {
+			for (let j = 0; j < grid[i].length; j++) {
+				populationCount += grid[i][j];
+			}
+		}
+
+		return ((populationCount / totalCells) * 100).toFixed(2);
+	}
+    
+	createPopulationChart() {
+		const ctx = document
+			.getElementById("population-chart")
+			.getContext("2d");
+		this.lineChart = new Chart(ctx, {
+			type: "line",
+			data: {
+				labels: Array.from({ length: this.populationData.length }, (_, i) => i + 1), // Assuming x-axis labels are from 1 to the length of data
+				datasets: [
+					{
+						label: "Data",
+						data: this.populationData,
+						borderColor: "rgb(75, 192, 192)",
+						tension: 0.1,
+					},
+				],
+			},
+			options: {
+				scales: {
+					y: {
+						beginAtZero: true,
+						ticks: {
+							callback: function (value, index, values) {
+								return value + "%";
+							},
+						},
+					},
+				},
+			},
+		});
+	}
+    updateChart() {
+        var newData = this.populationData.slice(0,this.currentGeneration)
+        this.lineChart.data.labels = Array.from({ length: newData.length }, (_, i) => i + 1);
+        this.lineChart.data.datasets[0].data = newData;
+        this.lineChart.update();
+    }
 }
 
 // Initialize the game with default settings from HTML inputs

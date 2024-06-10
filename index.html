@@ -1,46 +1,54 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>The Game of Life by Nevir2002</title>
-    <style>
-      canvas {
-        border: 1px solid black;
-      }
-    </style>
-  </head>
-  <body>
-    <div style="display: flex">
-      <canvas id="canvas"></canvas>
-      <div style="padding-left: 30px">
-        <p>Can also scroll your mouse (or hold left/right arrowkey) for rapid progression</p>
-        <p>Reset with R</p>
-        <p id="generation"></p>
-        <p id="population"></p>
-        <button id="next">Next generation</button>
-        <button id="prev">Previous generation</button>
-        <button id="reset">Random generation</button>
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>The Game of Life by Nevir2002</title>
+		<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+		<style>
+			canvas {
+				border: 1px solid black;
+			}
+		</style>
+	</head>
+	<body>
+		<div style="display: flex">
+			<canvas id="canvas"></canvas>
+			<div style="padding-left: 30px">
+				<p>
+					Can also scroll your mouse (or hold left/right arrowkey) for
+					rapid progression
+				</p>
+				<p>Reset with R</p>
+				<p id="generation"></p>
+				<p id="population"></p>
+				<button id="next">Next generation</button>
+				<button id="prev">Previous generation</button>
+				<button id="reset">Random generation</button>
+				<div>
+					<label for="width">Grid Width:</label>
+					<input type="number" id="width" value="100" min="1" />
+				</div>
+				<div>
+					<label for="height">Grid Height:</label>
+					<input type="number" id="height" value="100" min="1" />
+				</div>
+				<div>
+					<label for="cellSize">Cell Size:</label>
+					<input type="number" id="cellSize" value="9" min="1" />
+				</div>
+				<button id="applySettings">Apply Settings</button>
+				<div>
+					<label for="jumpToGen">Jump to Generation:</label>
+					<input type="number" id="jumpToGen" min="0" />
+					<button id="jumpBtn">Jump</button>
+				</div>
         <div>
-          <label for="width">Grid Width:</label>
-          <input type="number" id="width" value="100" min="1" />
+          <canvas id="population-chart" width="400" height="400"></canvas>
         </div>
-        <div>
-          <label for="height">Grid Height:</label>
-          <input type="number" id="height" value="100" min="1" />
-        </div>
-        <div>
-          <label for="cellSize">Cell Size:</label>
-          <input type="number" id="cellSize" value="9" min="1" />
-        </div>
-        <button id="applySettings">Apply Settings</button>
-        <div>
-          <label for="jumpToGen">Jump to Generation:</label>
-          <input type="number" id="jumpToGen" min="0" />
-          <button id="jumpBtn">Jump</button>
-        </div>
-      </div>
-    </div>
-    <script src="script.js"></script>
-  </body>
+			</div>
+		</div>
+		<script src="script.js"></script>
+
+	</body>
 </html>
