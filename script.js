@@ -7,6 +7,7 @@ class GameOfLife {
 		this.grid = this.make2DArray(this.cols, this.rows);
 		this.history = [this.grid];
 		this.populationData = [this.calculatePopulationPercentage(this.grid)];
+		this.isDrawing = false;
 
 		this.canvas = document.getElementById("canvas");
 		this.ctx = this.canvas.getContext("2d");
@@ -16,22 +17,24 @@ class GameOfLife {
 		this.applySettingsBtn = document.getElementById("applySettings");
 		this.genP = document.getElementById("generation");
 		this.popP = document.getElementById("population");
+		this.drawModeBtn = document.getElementById("drawMode");
 
 		this.dx = [-1, 0, 1, -1, 1, -1, 0, 1];
 		this.dy = [-1, -1, -1, 0, 0, 1, 1, 1];
 
-        this.lineChart = null;
+		this.lineChart = null;
+		this.isDrawMode = false;
 
 		this.setup();
 		this.addEventListeners();
 	}
 
-	make2DArray(cols, rows) {
+	make2DArray(cols, rows, defaultValue = 1) {
 		let arr = new Array(rows);
 		for (let i = 0; i < rows; i++) {
 			arr[i] = new Array(cols);
 			for (let j = 0; j < cols; j++) {
-				arr[i][j] = Math.round(Math.random());
+				arr[i][j] = defaultValue==0?0:Math.round(Math.random());
 			}
 		}
 		return arr;
@@ -74,6 +77,7 @@ class GameOfLife {
 			const newSize = parseInt(document.getElementById("cellSize").value);
 			this.updateSettings(newWidth, newHeight, newSize);
 		});
+
 		const jumpBtn = document.getElementById("jumpBtn");
 		jumpBtn.addEventListener("click", () => {
 			const generation = parseInt(
@@ -81,6 +85,53 @@ class GameOfLife {
 			);
 			this.jumpToGeneration(generation);
 		});
+
+		this.drawModeBtn.addEventListener("click", () => {
+			this.isDrawMode = !this.isDrawMode;
+			this.drawModeBtn.innerHTML = this.isDrawMode
+				? "Disable Draw Mode"
+				: "Enable Draw Mode";
+			if (this.isDrawMode) {
+				this.grid = this.make2DArray(this.cols, this.rows, 0);
+			} else{
+                this.grid = this.make2DArray(this.cols, this.rows);
+                }
+            this.draw();
+		});
+
+		this.canvas.addEventListener("mousedown", (event) => {
+			if (this.isDrawMode) {
+				this.isDrawing = true;
+				this.drawCell(event);
+			}
+		});
+
+		this.canvas.addEventListener("mousemove", (event) => {
+			if (this.isDrawing && this.isDrawMode) {
+				this.drawCell(event);
+			}
+		});
+
+		this.canvas.addEventListener("mouseup", () => {
+			this.isDrawing = false;
+		});
+
+		this.canvas.addEventListener("mouseleave", () => {
+			this.isDrawing = false;
+		});
+	}
+
+	drawCell(event) {
+		const rect = this.canvas.getBoundingClientRect();
+		const x = event.clientX - rect.left;
+		const y = event.clientY - rect.top;
+		const col = Math.floor(x / this.squareSize);
+		const row = Math.floor(y / this.squareSize);
+
+		if (col >= 0 && col < this.cols && row >= 0 && row < this.rows) {
+			this.grid[row][col] = 1; // Make the cell alive
+			this.draw();
+		}
 	}
 
 	jumpToGeneration(generation) {
@@ -122,7 +173,7 @@ class GameOfLife {
 		this.canvas.height = this.rows * this.squareSize;
 		this.currentGeneration = 1;
 		this.history = [this.grid];
-        this.createPopulationChart();
+		this.createPopulationChart();
 		this.draw();
 	}
 
@@ -141,9 +192,9 @@ class GameOfLife {
 	}
 
 	previousGeneration() {
-		if (this.currentGeneration > 0) {
+		if (this.currentGeneration > 1) {
 			this.currentGeneration--;
-			this.grid = this.history[this.currentGeneration];
+			this.grid = this.history[this.currentGeneration - 1];
 			this.draw();
 		}
 	}
@@ -183,8 +234,7 @@ class GameOfLife {
 	}
 
 	draw() {
-        this.updateChart()
-		// console.log(this.lineChart);
+		this.updateChart();
 		let cnt = 0;
 		for (let i = 0; i < this.grid.length; i++) {
 			for (let j = 0; j < this.grid[i].length; j++) {
@@ -214,6 +264,7 @@ class GameOfLife {
 		this.squareSize = newSquareSize;
 		this.setup();
 	}
+
 	calculatePopulationPercentage(grid) {
 		let totalCells = grid.length * grid[0].length;
 		let populationCount = 0;
@@ -226,18 +277,22 @@ class GameOfLife {
 
 		return ((populationCount / totalCells) * 100).toFixed(2);
 	}
-    
+
 	createPopulationChart() {
 		const ctx = document
 			.getElementById("population-chart")
 			.getContext("2d");
+		if (this.lineChart) this.lineChart.destroy();
 		this.lineChart = new Chart(ctx, {
 			type: "line",
 			data: {
-				labels: Array.from({ length: this.populationData.length }, (_, i) => i + 1), // Assuming x-axis labels are from 1 to the length of data
+				labels: Array.from(
+					{ length: this.populationData.length },
+					(_, i) => i + 1
+				), // Assuming x-axis labels are from 1 to the length of data
 				datasets: [
 					{
-						label: "Data",
+						label: "Percentage of population",
 						data: this.populationData,
 						borderColor: "rgb(75, 192, 192)",
 						tension: 0.1,
@@ -258,12 +313,16 @@ class GameOfLife {
 			},
 		});
 	}
-    updateChart() {
-        var newData = this.populationData.slice(0,this.currentGeneration)
-        this.lineChart.data.labels = Array.from({ length: newData.length }, (_, i) => i + 1);
-        this.lineChart.data.datasets[0].data = newData;
-        this.lineChart.update();
-    }
+
+	updateChart() {
+		var newData = this.populationData.slice(0, this.currentGeneration);
+		this.lineChart.data.labels = Array.from(
+			{ length: newData.length },
+			(_, i) => i + 1
+		);
+		this.lineChart.data.datasets[0].data = newData;
+		this.lineChart.update();
+	}
 }
 
 // Initialize the game with default settings from HTML inputs
