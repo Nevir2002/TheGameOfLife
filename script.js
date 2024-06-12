@@ -309,6 +309,21 @@ class GameOfLife {
 			},
 			options: {
 				animation: false,
+				elements: {
+					point: {
+						radius: 0, // Disable points
+					},
+				},
+				responsive: false, // Disable responsiveness if not needed
+				maintainAspectRatio: false,
+				plugins: {
+					tooltip: {
+						enabled: false, // Disable tooltips
+					},
+					hover: {
+						mode: null, // Disable hover effects
+					},
+				},
 				scales: {
 					y: {
 						beginAtZero: true,
