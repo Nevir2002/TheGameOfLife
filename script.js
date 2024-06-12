@@ -6,7 +6,7 @@ class GameOfLife {
 		this.currentGeneration = 1;
 		this.grid = this.make2DArray(this.cols, this.rows);
 		this.history = [this.grid];
-		this.populationData = [this.calculatePopulationPercentage(this.grid)];
+		this.populationData = [];
 		this.isDrawing = false;
 
 		this.canvas = document.getElementById("canvas");
@@ -34,7 +34,7 @@ class GameOfLife {
 		for (let i = 0; i < rows; i++) {
 			arr[i] = new Array(cols);
 			for (let j = 0; j < cols; j++) {
-				arr[i][j] = defaultValue==0?0:Math.round(Math.random());
+				arr[i][j] = defaultValue == 0 ? 0 : Math.round(Math.random());
 			}
 		}
 		return arr;
@@ -93,10 +93,13 @@ class GameOfLife {
 				: "Enable Draw Mode";
 			if (this.isDrawMode) {
 				this.grid = this.make2DArray(this.cols, this.rows, 0);
-			} else{
-                this.grid = this.make2DArray(this.cols, this.rows);
-                }
-            this.draw();
+			} else {
+				this.grid = this.make2DArray(this.cols, this.rows);
+			}
+			this.currentGeneration = 1;
+			this.history = [this.grid];
+			this.createPopulationChart();
+			this.draw();
 		});
 
 		this.canvas.addEventListener("mousedown", (event) => {
@@ -130,7 +133,12 @@ class GameOfLife {
 
 		if (col >= 0 && col < this.cols && row >= 0 && row < this.rows) {
 			this.grid[row][col] = 1; // Make the cell alive
+			this.populationData.pop();
+			this.populationData.push(
+				this.calculatePopulationPercentage(this.grid)
+			);
 			this.draw();
+			this.updateChart();
 		}
 	}
 
@@ -234,7 +242,6 @@ class GameOfLife {
 	}
 
 	draw() {
-		this.updateChart();
 		let cnt = 0;
 		for (let i = 0; i < this.grid.length; i++) {
 			for (let j = 0; j < this.grid[i].length; j++) {
@@ -256,6 +263,7 @@ class GameOfLife {
 			this.cols /
 			this.rows
 		).toFixed(2)}%)`;
+		this.updateChart();
 	}
 
 	updateSettings(newCols, newRows, newSquareSize) {
@@ -266,15 +274,15 @@ class GameOfLife {
 	}
 
 	calculatePopulationPercentage(grid) {
-		let totalCells = grid.length * grid[0].length;
+		let totalCells = grid.length * this.grid[0].length;
 		let populationCount = 0;
-
 		for (let i = 0; i < grid.length; i++) {
 			for (let j = 0; j < grid[i].length; j++) {
-				populationCount += grid[i][j];
+				// populationCount += this.grid[i][j];
+				const value = grid[i][j];
+				populationCount += value;
 			}
 		}
-
 		return ((populationCount / totalCells) * 100).toFixed(2);
 	}
 
@@ -300,6 +308,7 @@ class GameOfLife {
 				],
 			},
 			options: {
+				animation: false,
 				scales: {
 					y: {
 						beginAtZero: true,
@@ -312,6 +321,8 @@ class GameOfLife {
 				},
 			},
 		});
+		this.populationData = []
+		this.populationData.push(this.calculatePopulationPercentage(this.grid));
 	}
 
 	updateChart() {
