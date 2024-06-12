@@ -318,7 +318,7 @@ class GameOfLife {
 				maintainAspectRatio: false,
 				plugins: {
 					tooltip: {
-						enabled: false, // Disable tooltips
+						// enabled: false, // Disable tooltips
 					},
 					hover: {
 						mode: null, // Disable hover effects
